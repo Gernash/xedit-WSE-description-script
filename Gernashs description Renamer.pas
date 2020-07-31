@@ -7,7 +7,7 @@
 unit FO4PatchOmodDescriptions;
  
 const
-  sPropertiesList = wbScriptsPath + '_Gernashs description Renamer - Resource.txt';
+  sPropertiesList = wbScriptsPath + '1MODRenamer.txt';
  
 var
   slPropertyMap: TStringList;
@@ -37,6 +37,11 @@ if (valuetype = 'FormID,Float') and (valuefunctiontype = 'MUL+ADD') then begin
 		else
 		  Result := IntToStr(Int(f * 100)) + '%';
 	//	Result := (f); //to see the RAW Data
+	end
+else if (valuePropertytype = 'AimModelRecoilArcRotateDeg') or (valuePropertytype = 'AimModelRecoilMinDegPerShot') or (valuePropertytype = 'AimModelRecoilMaxDegPerShot') or (valuePropertytype = 'AimModelRecoilArcDeg') or (valuePropertytype = 'AimModelMinConeDegrees') or (valuePropertytype = 'AimModelMaxConeDegrees') then begin
+    f := GetNativeValue(ElementByIndex(prop, 6));
+		if f > 1.0 then
+		  Result := '+' + FloatToStr(f) + chr($00B0)
 	end
 else if (valuetype = 'Float') and (valuefunctiontype = 'MUL+ADD') then begin
     f := GetNativeValue(ElementByIndex(prop, 6));
@@ -102,17 +107,17 @@ begin
   if mappedValue = '\' then 
 		Result := Format('%s%s', [mappedName, mappedValue])+ ''
 	else if mappedName = 'Damage_Type' then 
-		Result := 'Additional ' + Format('%s' + ' Damage: ' + '%s' + ' ', [query, mappedValue])
+		Result := 'Additional ' + Format('%s' + ' Damage: ' + '%s', [query, mappedValue])
 	else if mappedName = 'Damage_Resistance' then 
 		Result := Format('%s' + ' Damage Reduced by: ' + '%s', [query, mappedValue])
 	else if	mappedName = 'Actor_Values_Type' then 
 		Result := Format('%s' + '+' + '%s', [query, mappedValue])
 	else if	(mappedName = 'Keywords_Values_Type') or (mappedName = 'MaterialSwaps_Values_Type') or (mappedName = 'Enchantments_Value') or (mappedName = 'MaterialSwaps_Values_Type') or (mappedName = 'Ammo_Type') then 
 		Result := Format('%s', [query])
-	else if (mappedName = 'Range (Min\Max):') or (mappedName = 'Recoil (Min\Max):') or (mappedName = 'Cone (Min\Max):')then 
-		Result := Format('%s%s', [mappedName, mappedValue])
+//	else if (mappedName = 'Range (Min\Max):') or (mappedName = 'Recoil (Min\Max):') or (mappedName = 'Cone (Min\Max):')then 
+//		Result := Format('%s%s', [mappedName, mappedValue])
 	else
-		Result := Format('%s%s' + ' | ', [mappedName, mappedValue]); //output layout 
+		Result := Format('%s%s', [mappedName, mappedValue]); //output layout 
 end;
  
 function GetOmodDescription(rec: IInterface): String;
@@ -121,29 +126,28 @@ var
   prop, properties: IInterface; 
   propname: string;
   sl: TStringList;
+  
 begin
   sl := TStringList.Create;
- 
-  properties := ElementByPath(rec, 'DATA\Properties');
+  
+ properties := ElementByPath(rec, 'DATA\Properties');
   for i := 0 to Pred(ElementCount(properties)) do begin
     prop := ElementByIndex(properties, i);
     propname := GetElementEditValues(prop, 'Property');
     j := slPropertyMap.IndexOfName(propname);
-    if j = -1 then Continue;
+	if j = -1 then Continue;
     // add property index as prefix for sorting
     sl.Add( Format('%.3d', [j]) + GetMappedDescription(prop, propname) );
   end;
- 
- 
+  //
   // sort, concatenate and remove prefixes
+  //
   sl.Sort;
   for i := 0 to sl.Count - 1 do begin
-  //Formatting the output
-  //	if Result <> '' then Result := Result + ' | ';  
-	if Result = '\' then Result := Result + '';
-	if Result <> '' then Result := Result + '';
+    if  Result <> '' then Result := Result + ' | ';
     Result := Result + Copy(sl[i], 4, Length(sl[i]));
-  end;
+//	AddMessage(Result);
+  end
     sl.Free;
 end;
  
